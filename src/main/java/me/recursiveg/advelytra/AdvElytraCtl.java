@@ -1,5 +1,6 @@
 package me.recursiveg.advelytra;
 
+import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.Gui;
@@ -8,12 +9,14 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemElytra;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.play.client.CPacketEntityAction;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.common.MinecraftForge;
@@ -148,10 +151,25 @@ public class AdvElytraCtl {
             enabled = false;
             return;
         }
-        localPlayer.motionY = -motionPitch/100;
+        double motionY = -motionPitch/100;
+        if (Minecraft.getMinecraft().gameSettings.keyBindJump.isKeyDown()) motionY += 0.35;
+        if (Minecraft.getMinecraft().gameSettings.keyBindSneak.isKeyDown()) {
+            motionY -= 0.35;
+            localPlayer.movementInput.sneak = false;
+        }
+        localPlayer.motionY = motionY;
+        double speed = this.speed;
+        if (Minecraft.getMinecraft().gameSettings.keyBindForward.isKeyDown()) speed += 0.4;
+        if (Minecraft.getMinecraft().gameSettings.keyBindBack.isKeyDown()) speed -= 0.34;
         double scale = 1D/(Math.sqrt(localPlayer.motionX*localPlayer.motionX+localPlayer.motionZ*localPlayer.motionZ))*(speed+BASE_SPEED);
         localPlayer.motionX *= scale;
         localPlayer.motionZ *= scale;
+        if (!MathHelper.epsilonEquals(localPlayer.moveStrafing, 0F)) {
+            Vec3d look = localPlayer.getLookVec();
+            look = look.subtract(0,look.yCoord,0).normalize().crossProduct(new Vec3d(0,-localPlayer.moveStrafing,0));
+            localPlayer.motionX += look.xCoord;
+            localPlayer.motionZ += look.zCoord;
+        }
     }
 
     @SubscribeEvent

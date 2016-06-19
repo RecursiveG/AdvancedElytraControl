@@ -42,31 +42,39 @@ public class CoreMod implements IFMLLoadingPlugin{
     public static final class ASM implements IClassTransformer {
         @Override
         public byte[] transform(String name, String transformedName, byte[] basicClass) {
+            byte[] ret;
+            if ((ret = transform1(name, transformedName, basicClass)) != null) return ret;
+            if ((ret = transform2(name, transformedName, basicClass)) != null) return ret;
+            if ((ret = transform3(name, transformedName, basicClass)) != null) return ret;
+            return basicClass;
+        }
+
+        private byte[] transform1(String name, String transformedName, byte[] basicClass) {
             try {
-                if (!transformedName.equals("net.minecraft.entity.EntityLivingBase")) return basicClass;
+                if (!transformedName.equals("net.minecraft.entity.EntityLivingBase")) return null;
                 ClassReader cr = new ClassReader(basicClass);
                 ClassNode cn = new ClassNode();
                 cr.accept(cn, 0);
-
                 for (MethodNode mn : cn.methods) {
-                    if (mn.name.equals("moveEntityWithHeading") || mn.name.equals("func_70612_e")) {
-                        if ("(FF)V".equals(FMLDeobfuscatingRemapper.INSTANCE.mapMethodDesc(mn.desc))) {
-                            AbstractInsnNode n = mn.instructions.getFirst();
-                            while (n != null) {
-                                if (n instanceof MethodInsnNode) {
-                                    MethodInsnNode tmp = (MethodInsnNode) n;
-                                    if (tmp.getOpcode() == Opcodes.INVOKEVIRTUAL && tmp.desc.equals("(DDD)V")) {
-                                        break;
-                                    }
+                    String methodName = FMLDeobfuscatingRemapper.INSTANCE.mapMethodName(name, mn.name, mn.desc);
+                    String methodDesc = FMLDeobfuscatingRemapper.INSTANCE.mapMethodDesc(mn.desc);
+
+                    if ("func_70612_e(FF)V".equals(methodName + methodDesc) || "moveEntityWithHeading(FF)V".equals(methodName + methodDesc)) {
+                        AbstractInsnNode n = mn.instructions.getFirst();
+                        while (n != null) {
+                            if (n instanceof MethodInsnNode) {
+                                MethodInsnNode tmp = (MethodInsnNode) n;
+                                if (tmp.getOpcode() == Opcodes.INVOKEVIRTUAL && tmp.desc.equals("(DDD)V")) {
+                                    break;
                                 }
-                                n = n.getNext();
                             }
-                            n = n.getPrevious().getPrevious().getPrevious().getPrevious().getPrevious().getPrevious().getPrevious();
-                            mn.instructions.insertBefore(n, new VarInsnNode(Opcodes.ALOAD, 0));
-                            mn.instructions.insertBefore(n, new MethodInsnNode(Opcodes.INVOKESTATIC, "me/recursiveg/advelytra/AdvElytraCtl",
-                                    "beforeMotion","(Lnet/minecraft/entity/EntityLivingBase;)V", false));
-                            System.out.println("[AEC] Transform success");
+                            n = n.getNext();
                         }
+                        n = n.getPrevious().getPrevious().getPrevious().getPrevious().getPrevious().getPrevious().getPrevious();
+                        mn.instructions.insertBefore(n, new VarInsnNode(Opcodes.ALOAD, 0));
+                        mn.instructions.insertBefore(n, new MethodInsnNode(Opcodes.INVOKESTATIC, "me/recursiveg/advelytra/AdvElytraCtl",
+                                "beforeMotion","(Lnet/minecraft/entity/EntityLivingBase;)V", false));
+                        System.out.println("[AEC] Transform success");
                     }
                 }
 
@@ -76,7 +84,64 @@ public class CoreMod implements IFMLLoadingPlugin{
             } catch (Exception ex) {
                 ex.printStackTrace();
                 System.err.print(String.format("Transform Error: (%s)%s", name, transformedName));
-                return basicClass;
+                return null;
+            }
+        }
+
+        private byte[] transform2(String name, String transformedName, byte[] basicClass) {
+            try {
+                if (!transformedName.equals("net.minecraft.client.entity.EntityPlayerSP")) return null;
+                ClassReader cr = new ClassReader(basicClass);
+                ClassNode cn = new ClassNode();
+                cr.accept(cn, 0);
+                for (MethodNode mn : cn.methods) {
+                    String methodName = FMLDeobfuscatingRemapper.INSTANCE.mapMethodName(name, mn.name, mn.desc);
+                    String methodDesc = FMLDeobfuscatingRemapper.INSTANCE.mapMethodDesc(mn.desc);
+
+                    if ("func_//TODO//_x(FF)V".equals(methodName + methodDesc) || "onUpdateWalkingPlayer()V".equals(methodName + methodDesc)) {
+                        AbstractInsnNode n = mn.instructions.getFirst();
+                        mn.instructions.insertBefore(n, new VarInsnNode(Opcodes.ALOAD, 0));
+                        mn.instructions.insertBefore(n, new MethodInsnNode(Opcodes.INVOKESTATIC, "me/recursiveg/advelytra/AdvElytraCtl",
+                                "beforePacket","(Lnet/minecraft/client/entity/EntityPlayerSP;)V", false));
+                        System.out.println("[AEC] Transform success2");
+                    }
+                }
+
+                ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
+                cn.accept(cw);
+                return cw.toByteArray();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                System.err.print(String.format("Transform Error: (%s)%s", name, transformedName));
+                return null;
+            }
+        }
+
+        private byte[] transform3(String name, String transformedName, byte[] basicClass) {
+            try {
+                if (!transformedName.equals("net.minecraft.entity.Entity")) return null;
+                ClassReader cr = new ClassReader(basicClass);
+                ClassNode cn = new ClassNode();
+                cr.accept(cn, 0);
+                for (MethodNode mn : cn.methods) {
+                    String methodName = FMLDeobfuscatingRemapper.INSTANCE.mapMethodName(name, mn.name, mn.desc);
+                    String methodDesc = FMLDeobfuscatingRemapper.INSTANCE.mapMethodDesc(mn.desc);
+
+                    if ("func_//TODO//_x(FF)V".equals(methodName + methodDesc) || "isInvisible()V".equals(methodName + methodDesc)) {
+                        AbstractInsnNode n = mn.instructions.getFirst();
+                        mn.instructions.insertBefore(n, new InsnNode(Opcodes.ICONST_0));
+                        mn.instructions.insertBefore(n, new InsnNode(Opcodes.IRETURN));
+                        System.out.println("[AEC] Transform success3");
+                    }
+                }
+
+                ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
+                cn.accept(cw);
+                return cw.toByteArray();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                System.err.print(String.format("Transform Error: (%s)%s", name, transformedName));
+                return null;
             }
         }
     }
