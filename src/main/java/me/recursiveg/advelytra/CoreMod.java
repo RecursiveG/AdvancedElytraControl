@@ -44,8 +44,6 @@ public class CoreMod implements IFMLLoadingPlugin{
         public byte[] transform(String name, String transformedName, byte[] basicClass) {
             byte[] ret;
             if ((ret = transform1(name, transformedName, basicClass)) != null) return ret;
-            if ((ret = transform2(name, transformedName, basicClass)) != null) return ret;
-            if ((ret = transform3(name, transformedName, basicClass)) != null) return ret;
             return basicClass;
         }
 
@@ -75,63 +73,6 @@ public class CoreMod implements IFMLLoadingPlugin{
                         mn.instructions.insertBefore(n, new MethodInsnNode(Opcodes.INVOKESTATIC, "me/recursiveg/advelytra/AdvElytraCtl",
                                 "beforeMotion","(Lnet/minecraft/entity/EntityLivingBase;)V", false));
                         System.out.println("[AEC] Transform success");
-                    }
-                }
-
-                ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
-                cn.accept(cw);
-                return cw.toByteArray();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                System.err.print(String.format("Transform Error: (%s)%s", name, transformedName));
-                return null;
-            }
-        }
-
-        private byte[] transform2(String name, String transformedName, byte[] basicClass) {
-            try {
-                if (!transformedName.equals("net.minecraft.client.entity.EntityPlayerSP")) return null;
-                ClassReader cr = new ClassReader(basicClass);
-                ClassNode cn = new ClassNode();
-                cr.accept(cn, 0);
-                for (MethodNode mn : cn.methods) {
-                    String methodName = FMLDeobfuscatingRemapper.INSTANCE.mapMethodName(name, mn.name, mn.desc);
-                    String methodDesc = FMLDeobfuscatingRemapper.INSTANCE.mapMethodDesc(mn.desc);
-
-                    if ("func_//TODO//_x(FF)V".equals(methodName + methodDesc) || "onUpdateWalkingPlayer()V".equals(methodName + methodDesc)) {
-                        AbstractInsnNode n = mn.instructions.getFirst();
-                        mn.instructions.insertBefore(n, new VarInsnNode(Opcodes.ALOAD, 0));
-                        mn.instructions.insertBefore(n, new MethodInsnNode(Opcodes.INVOKESTATIC, "me/recursiveg/advelytra/AdvElytraCtl",
-                                "beforePacket","(Lnet/minecraft/client/entity/EntityPlayerSP;)V", false));
-                        System.out.println("[AEC] Transform success2");
-                    }
-                }
-
-                ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
-                cn.accept(cw);
-                return cw.toByteArray();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                System.err.print(String.format("Transform Error: (%s)%s", name, transformedName));
-                return null;
-            }
-        }
-
-        private byte[] transform3(String name, String transformedName, byte[] basicClass) {
-            try {
-                if (!transformedName.equals("net.minecraft.entity.Entity")) return null;
-                ClassReader cr = new ClassReader(basicClass);
-                ClassNode cn = new ClassNode();
-                cr.accept(cn, 0);
-                for (MethodNode mn : cn.methods) {
-                    String methodName = FMLDeobfuscatingRemapper.INSTANCE.mapMethodName(name, mn.name, mn.desc);
-                    String methodDesc = FMLDeobfuscatingRemapper.INSTANCE.mapMethodDesc(mn.desc);
-
-                    if ("func_//TODO//_x(FF)V".equals(methodName + methodDesc) || "isInvisible()V".equals(methodName + methodDesc)) {
-                        AbstractInsnNode n = mn.instructions.getFirst();
-                        mn.instructions.insertBefore(n, new InsnNode(Opcodes.ICONST_0));
-                        mn.instructions.insertBefore(n, new InsnNode(Opcodes.IRETURN));
-                        System.out.println("[AEC] Transform success3");
                     }
                 }
 

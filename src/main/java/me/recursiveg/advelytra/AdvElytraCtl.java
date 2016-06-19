@@ -18,6 +18,7 @@ import net.minecraft.network.play.client.CPacketEntityAction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.living.LivingEvent;
@@ -39,39 +40,33 @@ import java.lang.reflect.Method;
 @SideOnly(Side.CLIENT)
 @Mod(modid = "advelytractl")
 public class AdvElytraCtl {
-    private static final double BASE_SPEED = 0.35;
+    private static final double MAX_SPEED = 3;
+    private static final double DEFAULT_SPEED = 0.4;
+    private static final double MIN_SPEED = 0;
+    private static final double BOOST_SPEED = 7;
     @Mod.Instance
     public static AdvElytraCtl instance;
 
-    EntityPlayerSP localPlayer = null;
-    boolean enabled = false;
-    double motionPitch = 0; // negative = up; positive = down
-    double motionYaw = 0;
-    double speed = 0;
+    private EntityPlayerSP localPlayer = null;
+    private boolean enabled = false;
+    private double speed = 0;
 
-    KeyBinding toggle    = new KeyBinding("Toggle"    , Keyboard.KEY_O, "Advanced Elytra Control");
-    KeyBinding reset     = new KeyBinding("Reset"     , Keyboard.KEY_P, "Advanced Elytra Control");
-    KeyBinding pitchUp   = new KeyBinding("Pitch Up"  , Keyboard.KEY_I, "Advanced Elytra Control");
-    KeyBinding pitchDown = new KeyBinding("Pitch Down", Keyboard.KEY_K, "Advanced Elytra Control");
-    KeyBinding yawLeft   = new KeyBinding("Yaw Left"  , Keyboard.KEY_J, "Advanced Elytra Control");
-    KeyBinding yawRight  = new KeyBinding("Yaw Right" , Keyboard.KEY_L, "Advanced Elytra Control");
-    KeyBinding accelerate= new KeyBinding("Accelerate", Keyboard.KEY_U, "Advanced Elytra Control");
-    KeyBinding brake     = new KeyBinding("Brake"     , Keyboard.KEY_M, "Advanced Elytra Control");
-
+    private KeyBinding toggle    = new KeyBinding("Toggle"    , Keyboard.KEY_G, "Advanced Elytra Control");
+    private KeyBinding reset     = new KeyBinding("Reset"     , Keyboard.KEY_H, "Advanced Elytra Control");
+    private KeyBinding accelerate= new KeyBinding("Accelerate", Keyboard.KEY_Y, "Advanced Elytra Control");
+    private KeyBinding brake     = new KeyBinding("Brake"     , Keyboard.KEY_B, "Advanced Elytra Control");
+    private KeyBinding boost     = new KeyBinding("Boost"     , Keyboard.KEY_N, "Advanced Elytra Control");
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent ev) {
-        try {
-            Class.forName("net.minecraft.entity.EntityLivingBase");
-        } catch (Exception ex) {ex.printStackTrace();}
+//        try {
+//            Class.forName("net.minecraft.entity.EntityLivingBase");
+//        } catch (Exception ex) {ex.printStackTrace();}
         ClientRegistry.registerKeyBinding(toggle);
         ClientRegistry.registerKeyBinding(reset);
-        ClientRegistry.registerKeyBinding(pitchUp);
-        ClientRegistry.registerKeyBinding(pitchDown);
-        ClientRegistry.registerKeyBinding(yawLeft);
-        ClientRegistry.registerKeyBinding(yawRight);
         ClientRegistry.registerKeyBinding(accelerate);
         ClientRegistry.registerKeyBinding(brake);
+        ClientRegistry.registerKeyBinding(boost);
         MinecraftForge.EVENT_BUS.register(this);
     }
 
@@ -83,58 +78,42 @@ public class AdvElytraCtl {
     @SubscribeEvent
     public void onToggle(InputEvent.KeyInputEvent e) {
         if (toggle.isPressed()) {
-            if (!FMLClientHandler.instance().getClient().thePlayer.isElytraFlying()) {
-                msg("You must wear elytra to fly");
+            boolean isFlying = FMLClientHandler.instance().getClient().thePlayer.isElytraFlying();
+            if (enabled) {
+                localPlayer = null;
+                speed = DEFAULT_SPEED;
                 enabled = false;
-                return;
-            }
-            localPlayer = FMLClientHandler.instance().getClientPlayerEntity();
-            speed = Math.sqrt(localPlayer.motionX * localPlayer.motionX + localPlayer.motionZ * localPlayer.motionZ) - BASE_SPEED;
-            if (speed < 0) speed = 0;
-            enabled = !enabled;
-            if (enabled) msg("Direction Locked.");
-            else msg("Disabled");
-        } else if (pitchUp.isPressed()) {
-            if (reset.isKeyDown()) {
-                motionPitch = 0;
+                msg("Disabled");
+            } else if (!isFlying){
+                msg("You can only do this when flying.");
             } else {
-                motionPitch -= 1;
-                if (motionPitch < -90) motionPitch = -90;
-            }
-        } else if (pitchDown.isPressed()) {
-            if (reset.isKeyDown()) {
-                motionPitch = 0;
-            } else {
-                motionPitch += 1;
-                if (motionPitch > 90) motionPitch = 90;
-            }
-        } else if (yawRight.isPressed()) {
-            if (reset.isKeyDown()) {
-                motionYaw = 0;
-            } else {
-                motionYaw += 1;
-                if (motionYaw > 50) motionYaw = 50;
-            }
-        } else if (yawLeft.isPressed()) {
-            if (reset.isKeyDown()) {
-                motionYaw = 0;
-            } else {
-                motionYaw -= 1;
-                if (motionYaw < -50) motionYaw = -50;
+                localPlayer = FMLClientHandler.instance().getClientPlayerEntity();
+                speed = Math.sqrt(localPlayer.motionX * localPlayer.motionX + localPlayer.motionZ * localPlayer.motionZ);
+                if (speed < MIN_SPEED) speed = MIN_SPEED;
+                if (speed > MAX_SPEED) speed = MAX_SPEED;
+                enabled = true;
+                msg("Height Locked!");
             }
         } else if (accelerate.isPressed()) {
-            if (reset.isKeyDown()) {
-                speed = 0;
-            } else {
-                speed += 0.1;
-                if (speed > 2) speed = 2;
-            }
+            speed += 0.1;
+            if (speed > MAX_SPEED) speed = MAX_SPEED;
         } else if (brake.isPressed()) {
-            if (reset.isKeyDown()) {
-                speed = 0;
+            speed -= 0.1;
+            if (speed < MIN_SPEED) speed = MIN_SPEED;
+        } else if (reset.isPressed()) {
+            speed = DEFAULT_SPEED;
+        } else if (boost.isPressed()) {
+            if (!FMLClientHandler.instance().getClient().thePlayer.isElytraFlying()) {
+                msg("You can do this only when flying");
+            } else if (enabled) {
+                msg("Booster conflicts with AEC");
             } else {
-                speed -= 0.1;
-                if (speed < 0) speed = 0;
+                EntityPlayerSP p =FMLClientHandler.instance().getClient().thePlayer;
+                Vec3d look = p.getLookVec();
+                look = look.normalize().scale(BOOST_SPEED);
+                p.motionX += look.xCoord;
+                p.motionY += look.yCoord;
+                p.motionZ += look.zCoord;
             }
         }
     }
@@ -151,22 +130,23 @@ public class AdvElytraCtl {
             enabled = false;
             return;
         }
-        double motionY = -motionPitch/100;
-        if (Minecraft.getMinecraft().gameSettings.keyBindJump.isKeyDown()) motionY += 0.35;
+
+        double speed = this.speed;
+        if (Minecraft.getMinecraft().gameSettings.keyBindForward.isKeyDown()) speed += 0.5;
+        if (Minecraft.getMinecraft().gameSettings.keyBindBack.isKeyDown()) speed -= 0.4;
+        double yawRad = (double) (localPlayer.rotationYaw+90)/180D*Math.PI;
+        localPlayer.motionX = Math.cos(yawRad) * speed;
+        localPlayer.motionZ = Math.sin(yawRad) * speed;
+
+        localPlayer.motionY = 0;
+        if (Minecraft.getMinecraft().gameSettings.keyBindJump.isKeyDown()) localPlayer.motionY += 0.5;
         if (Minecraft.getMinecraft().gameSettings.keyBindSneak.isKeyDown()) {
-            motionY -= 0.35;
+            localPlayer.motionY -= 0.5;
             localPlayer.movementInput.sneak = false;
         }
-        localPlayer.motionY = motionY;
-        double speed = this.speed;
-        if (Minecraft.getMinecraft().gameSettings.keyBindForward.isKeyDown()) speed += 0.4;
-        if (Minecraft.getMinecraft().gameSettings.keyBindBack.isKeyDown()) speed -= 0.34;
-        double scale = 1D/(Math.sqrt(localPlayer.motionX*localPlayer.motionX+localPlayer.motionZ*localPlayer.motionZ))*(speed+BASE_SPEED);
-        localPlayer.motionX *= scale;
-        localPlayer.motionZ *= scale;
+
         if (!MathHelper.epsilonEquals(localPlayer.moveStrafing, 0F)) {
-            Vec3d look = localPlayer.getLookVec();
-            look = look.subtract(0,look.yCoord,0).normalize().crossProduct(new Vec3d(0,-localPlayer.moveStrafing,0));
+            Vec3d look = new Vec3d(Math.cos(yawRad), 0, Math.sin(yawRad)).crossProduct(new Vec3d(0,-localPlayer.moveStrafing,0));
             localPlayer.motionX += look.xCoord;
             localPlayer.motionZ += look.zCoord;
         }
@@ -178,15 +158,11 @@ public class AdvElytraCtl {
         if (event.getType().equals(RenderGameOverlayEvent.ElementType.CROSSHAIRS)) {
             int centerX = event.getResolution().getScaledWidth() / 2;
             int centerY = event.getResolution().getScaledHeight() / 2;
-
-            int pitchLineY = (int)(centerY + (motionPitch / 9));
-            int yawLineX   = (int)(centerX + (motionYaw / 5));
-            double speedPercent = (speed + BASE_SPEED) / 2.6D;
-            int speedTopY = centerY + (int)(-15*speedPercent);
-            boolean speedUp = Minecraft.getMinecraft().gameSettings.keyBindForward.isKeyDown();
-            Gui.drawRect(centerX - 7, pitchLineY, centerX + 7, pitchLineY + 1, 0xFFFF0000);
-            Gui.drawRect(yawLineX, centerY -7, yawLineX + 1, centerY + 7, 0xFFFF0000);
-            Gui.drawRect(centerX + 9, speedTopY, centerX + 10, centerY, speedUp?0xFFFF0000:0xFF00FF00);
+            Gui.drawRect(centerX - 7, centerY, centerX + 7, centerY + 1, 0xFFFF0000);
+            Gui.drawRect(centerX, centerY -7, centerX + 1, centerY + 7, 0xFFFF0000);
+            GuiIngame guiGame = FMLClientHandler.instance().getClient().ingameGUI;
+            guiGame.drawCenteredString(guiGame.getFontRenderer(),String.format("%.2f", speed),centerX, centerY + 9, 0xFFFF0000);
+//            boolean speedUp = Minecraft.getMinecraft().gameSettings.keyBindForward.isKeyDown();
         }
     }
 
