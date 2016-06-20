@@ -2,6 +2,7 @@ package me.recursiveg.advelytra;
 
 import net.minecraft.launchwrapper.IClassNameTransformer;
 import net.minecraft.launchwrapper.IClassTransformer;
+import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.fml.common.asm.transformers.deobf.FMLDeobfuscatingRemapper;
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
 import org.objectweb.asm.ClassReader;
@@ -39,6 +40,7 @@ public class CoreMod implements IFMLLoadingPlugin{
     }
 
     /* EntityLivingBase::moveEntityWithHeading#L1867(this.moveEntity()) */
+    /** @see net.minecraft.entity.EntityLivingBase#moveEntityWithHeading(float, float)  */
     public static final class ASM implements IClassTransformer {
         @Override
         public byte[] transform(String name, String transformedName, byte[] basicClass) {
@@ -72,6 +74,19 @@ public class CoreMod implements IFMLLoadingPlugin{
                         mn.instructions.insertBefore(n, new VarInsnNode(Opcodes.ALOAD, 0));
                         mn.instructions.insertBefore(n, new MethodInsnNode(Opcodes.INVOKESTATIC, "me/recursiveg/advelytra/AdvElytraCtl",
                                 "beforeMotion","(Lnet/minecraft/entity/EntityLivingBase;)V", false));
+
+                        while (n != null) {
+                            if (n instanceof LdcInsnNode) {
+                                LdcInsnNode tmp = (LdcInsnNode) n;
+                                if (tmp.cst instanceof Float && Math.abs((float)tmp.cst-0.91f) < 1E-5f)
+                                    break;
+                            }
+                            n = n.getNext();
+                        }
+                        mn.instructions.insertBefore(n, new VarInsnNode(Opcodes.ALOAD, 0));
+                        mn.instructions.insertBefore(n, new MethodInsnNode(Opcodes.INVOKESTATIC, "me/recursiveg/advelytra/AdvElytraCtl",
+                                "beforeNotFlyMotion","(Lnet/minecraft/entity/EntityLivingBase;)V", false));
+
                         System.out.println("[AEC] Transform success");
                     }
                 }

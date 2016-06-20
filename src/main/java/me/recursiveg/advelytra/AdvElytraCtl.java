@@ -125,11 +125,6 @@ public class AdvElytraCtl {
             enabled = false;
             return;
         }
-        if (localPlayer.isCollidedHorizontally || localPlayer.isCollidedVertically) {
-            msg("Boom!");
-            enabled = false;
-            return;
-        }
 
         double speed = this.speed;
         if (Minecraft.getMinecraft().gameSettings.keyBindForward.isKeyDown()) speed += 0.5;
@@ -150,6 +145,22 @@ public class AdvElytraCtl {
             localPlayer.motionX += look.xCoord;
             localPlayer.motionZ += look.zCoord;
         }
+
+        if (localPlayer.isCollidedHorizontally) {
+            localPlayer.motionX *= 0.1;
+            localPlayer.motionZ *= 0.1;
+            localPlayer.isCollidedHorizontally = false;
+        }
+        if (localPlayer.isCollidedVertically) {
+            localPlayer.motionY = 0;
+            localPlayer.isCollidedVertically = false;
+        }
+    }
+
+    public void onBeforeNotFlyMotion(EntityLivingBase elb) {
+        if (!enabled || elb != localPlayer) return;
+        msg("You are not flying");
+        enabled = false;
     }
 
     @SubscribeEvent
@@ -172,5 +183,8 @@ public class AdvElytraCtl {
 
     public static void beforeMotion(EntityLivingBase elb) {
         instance.onBeforePlayerMotion(elb);
+    }
+    public static void beforeNotFlyMotion(EntityLivingBase elb) {
+        instance.onBeforeNotFlyMotion(elb);
     }
 }
