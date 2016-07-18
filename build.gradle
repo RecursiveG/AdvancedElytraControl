@@ -22,10 +22,10 @@ group= "me.recursiveg.advelytrctl" // http://maven.apache.org/guides/mini/guide-
 archivesBaseName = "AdvancedElytraControl-mc1.9.4-forge1909"
 
 minecraft {
-    version = "1.9.4-12.17.0.1909-1.9.4"
-    runDir = "../gameDir"
-    mappings = "snapshot_20160520"
-    makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
+    version = "1.10.2-12.18.1.2011"
+    runDir = "run"
+    mappings = "snapshot_20160717"
+    makeObfSourceJar = false
 }
 
 jar
