@@ -15,6 +15,7 @@ import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemElytra;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.play.client.CPacketEntityAction;
+import net.minecraft.network.play.client.CPacketPlayer;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.TextComponentString;
@@ -103,19 +104,38 @@ public class AdvElytraCtl {
         } else if (reset.isPressed()) {
             speed = DEFAULT_SPEED;
         } else if (boost.isPressed()) {
-            if (!FMLClientHandler.instance().getClient().player.isElytraFlying()) {
-                msg("You can do this only when flying");
-            } else if (enabled) {
-                msg("Booster conflicts with AEC");
+            EntityPlayerSP p = FMLClientHandler.instance().getClient().player;
+            ItemStack chestItem = p.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
+            if (chestItem != null && chestItem.getItem() == Items.ELYTRA && ItemElytra.isBroken(chestItem)) {
+                if (enabled) {
+                    msg("Booster conflicts with AEC");
+                } else {
+                    if (!p.isElytraFlying()) {
+                        groundProject();
+                    } else {
+                        Vec3d look = p.getLookVec();
+                        look = look.normalize().scale(BOOST_SPEED);
+                        p.motionX += look.xCoord;
+                        p.motionY += look.yCoord;
+                        p.motionZ += look.zCoord;
+                    }
+                }
             } else {
-                EntityPlayerSP p =FMLClientHandler.instance().getClient().player;
-                Vec3d look = p.getLookVec();
-                look = look.normalize().scale(BOOST_SPEED);
-                p.motionX += look.xCoord;
-                p.motionY += look.yCoord;
-                p.motionZ += look.zCoord;
+                msg("You can do this only with elytra on");
             }
         }
+    }
+
+    public void groundProject() {
+        EntityPlayerSP p = FMLClientHandler.instance().getClientPlayerEntity();
+        p.connection.sendPacket(new CPacketPlayer.Position(p.posX, p.posY, p.posZ, false));
+        //p.connection.sendPacket(new CPacketPlayer.Position(p.posX, p.posY+0.1,p.posZ, false));
+        p.connection.sendPacket(new CPacketEntityAction(p, CPacketEntityAction.Action.START_FALL_FLYING));
+        Vec3d look = p.getLookVec();
+        look = look.normalize().scale(BOOST_SPEED/3);
+        p.motionX += look.xCoord;
+        p.motionY += look.yCoord;
+        p.motionZ += look.zCoord;
     }
 
     public void onBeforePlayerMotion(EntityLivingBase elb) {
