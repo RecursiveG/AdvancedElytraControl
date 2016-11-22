@@ -19,12 +19,12 @@ targetCompatibility = 1.7
 
 version = "0.1-dev"
 group= "me.recursiveg.advelytrctl" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = "AdvancedElytraControl-mc1.9.4-forge1909"
+archivesBaseName = "AdvancedElytraControl-mc1.10.2-forge2151"
 
 minecraft {
-    version = "1.10.2-12.18.1.2011"
+    version = "1.10.2-12.18.2.2151"
     runDir = "run"
-    mappings = "snapshot_20160717"
+    mappings = "stable_29"
     makeObfSourceJar = false
 }
 

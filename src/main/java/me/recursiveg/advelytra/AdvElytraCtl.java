@@ -78,7 +78,7 @@ public class AdvElytraCtl {
     @SubscribeEvent
     public void onToggle(InputEvent.KeyInputEvent e) {
         if (toggle.isPressed()) {
-            boolean isFlying = FMLClientHandler.instance().getClient().thePlayer.isElytraFlying();
+            boolean isFlying = FMLClientHandler.instance().getClient().player.isElytraFlying();
             if (enabled) {
                 localPlayer = null;
                 speed = DEFAULT_SPEED;
@@ -103,12 +103,12 @@ public class AdvElytraCtl {
         } else if (reset.isPressed()) {
             speed = DEFAULT_SPEED;
         } else if (boost.isPressed()) {
-            if (!FMLClientHandler.instance().getClient().thePlayer.isElytraFlying()) {
+            if (!FMLClientHandler.instance().getClient().player.isElytraFlying()) {
                 msg("You can do this only when flying");
             } else if (enabled) {
                 msg("Booster conflicts with AEC");
             } else {
-                EntityPlayerSP p =FMLClientHandler.instance().getClient().thePlayer;
+                EntityPlayerSP p =FMLClientHandler.instance().getClient().player;
                 Vec3d look = p.getLookVec();
                 look = look.normalize().scale(BOOST_SPEED);
                 p.motionX += look.xCoord;
@@ -178,7 +178,7 @@ public class AdvElytraCtl {
     }
 
     public static void msg(String msg) {
-        FMLClientHandler.instance().getClient().thePlayer.addChatMessage(new TextComponentString("[AEC] " + msg));
+        FMLClientHandler.instance().getClient().player.sendMessage(new TextComponentString("[AEC] " + msg));
     }
 
     public static void beforeMotion(EntityLivingBase elb) {
