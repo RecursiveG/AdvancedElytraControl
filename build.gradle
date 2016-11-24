@@ -14,17 +14,19 @@ buildscript {
 }
 apply plugin: 'net.minecraftforge.gradle.forge'
 
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+sourceCompatibility = targetCompatibility = "1.8" // Need this here so eclipse task generates correctly.
+compileJava {
+    sourceCompatibility = targetCompatibility = "1.8"
+}
 
 version = "0.1-dev"
 group= "me.recursiveg.advelytrctl" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = "AdvancedElytraControl-mc1.10.2-forge2151"
+archivesBaseName = "AdvancedElytraControl-mc1.11-forge2157"
 
 minecraft {
-    version = "1.10.2-12.18.2.2151"
+    version = "1.11-13.19.0.2157"
     runDir = "run"
-    mappings = "stable_29"
+    mappings = "snapshot_20161123"
     makeObfSourceJar = false
 }
 

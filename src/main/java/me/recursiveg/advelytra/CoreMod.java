@@ -64,13 +64,14 @@ public class CoreMod implements IFMLLoadingPlugin{
                         while (n != null) {
                             if (n instanceof MethodInsnNode) {
                                 MethodInsnNode tmp = (MethodInsnNode) n;
-                                if (tmp.getOpcode() == Opcodes.INVOKEVIRTUAL && tmp.desc.equals("(DDD)V")) {
+                                if (tmp.getOpcode() == Opcodes.INVOKEVIRTUAL && tmp.desc.endsWith(";DDD)V")) {
+                                    //this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
                                     break;
                                 }
                             }
                             n = n.getNext();
                         }
-                        n = n.getPrevious().getPrevious().getPrevious().getPrevious().getPrevious().getPrevious().getPrevious();
+                        n = n.getPrevious().getPrevious().getPrevious().getPrevious().getPrevious().getPrevious().getPrevious().getPrevious();
                         mn.instructions.insertBefore(n, new VarInsnNode(Opcodes.ALOAD, 0));
                         mn.instructions.insertBefore(n, new MethodInsnNode(Opcodes.INVOKESTATIC, "me/recursiveg/advelytra/AdvElytraCtl",
                                 "beforeMotion","(Lnet/minecraft/entity/EntityLivingBase;)V", false));
