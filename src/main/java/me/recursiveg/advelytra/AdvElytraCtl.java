@@ -242,7 +242,7 @@ public class AdvElytraCtl {
                 double dx = p.x-localPlayer.posX;
                 double dz = p.z-localPlayer.posZ;
                 int fh = guiGame.getFontRenderer().FONT_HEIGHT;
-                guiGame.drawCenteredString(guiGame.getFontRenderer(),String.format("Target[%d:%d]", p.z,p.z),centerX, centerY + 9 + fh, 0xFFFF0000);
+                guiGame.drawCenteredString(guiGame.getFontRenderer(),String.format("Target[%d:%d]", p.x,p.z),centerX, centerY + 9 + fh, 0xFFFF0000);
                 guiGame.drawCenteredString(guiGame.getFontRenderer(),String.format("Dist: %.1f", Math.sqrt(dx*dx+dz*dz)),centerX, centerY + 9 + 2 * fh, 0xFFFF0000);
             }
             guiGame.drawCenteredString(guiGame.getFontRenderer(),String.format("Speed: %.2f", speed),centerX, centerY + 9, 0xFFFF0000);
