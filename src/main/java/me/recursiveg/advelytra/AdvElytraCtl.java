@@ -37,6 +37,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import org.lwjgl.input.Keyboard;
 
 import java.lang.reflect.Method;
+import java.util.ArrayDeque;
+import java.util.Queue;
 
 @SideOnly(Side.CLIENT)
 @Mod(modid = "advelytractl")
@@ -45,8 +47,21 @@ public class AdvElytraCtl {
     private static final double DEFAULT_SPEED = 0.4;
     private static final double MIN_SPEED = 0;
     private static final double BOOST_SPEED = 7;
+    private static final double BEACON_RADIUS_SQUARED = 4;
+
+    public static class LocationPair {
+        public LocationPair(int x, int z) {
+            this.x = x;
+            this.z = z;
+        }
+        public int x;
+        public int z;
+    }
+
     @Mod.Instance
     public static AdvElytraCtl instance;
+    public final Queue<LocationPair> beacons = new ArrayDeque<>();
+    public Float lockedYaw = null;
 
     private EntityPlayerSP localPlayer = null;
     private boolean enabled = false;
@@ -73,7 +88,7 @@ public class AdvElytraCtl {
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent ev) {
-
+        ClientCommandHandler.instance.registerCommand(new Command());
     }
 
     @SubscribeEvent
@@ -138,6 +153,22 @@ public class AdvElytraCtl {
         p.motionZ += look.zCoord;
     }
 
+    public void adjustFaceDirectionToTopTarget() {
+        if (beacons.isEmpty() || localPlayer==null) return;
+        LocationPair p = beacons.peek();
+        Vec3d direction = new Vec3d(p.x-localPlayer.posX, 0, p.z-localPlayer.posZ).normalize();
+        double degree = Math.asin(direction.xCoord)/(Math.PI/2)*90;
+        double yaw;
+        if (degree == 0) {
+            yaw = direction.zCoord >= 0? 0: 180;
+        } else if (degree > 0) {
+            yaw = direction.zCoord >= 0? -degree: degree-180;
+        } else {
+            yaw = direction.zCoord >= 0? -degree: 180+degree;
+        }
+        localPlayer.rotationYaw = (float)yaw;
+    }
+
     public void onBeforePlayerMotion(EntityLivingBase elb) {
         if (!enabled || elb != localPlayer) return;
         if (!localPlayer.isElytraFlying()) {
@@ -149,9 +180,23 @@ public class AdvElytraCtl {
         double speed = this.speed;
         if (Minecraft.getMinecraft().gameSettings.keyBindForward.isKeyDown()) speed += 0.5;
         if (Minecraft.getMinecraft().gameSettings.keyBindBack.isKeyDown()) speed -= 0.4;
-        double yawRad = (double) (localPlayer.rotationYaw+90)/180D*Math.PI;
-        localPlayer.motionX = Math.cos(yawRad) * speed;
-        localPlayer.motionZ = Math.sin(yawRad) * speed;
+        double yawRad = (double) (localPlayer.rotationYaw + 90) / 180D * Math.PI;
+        if (beacons.isEmpty()) {
+            double yaw2 = lockedYaw==null? yawRad: (double) (lockedYaw + 90) / 180D * Math.PI;
+            localPlayer.motionX = Math.cos(yaw2) * speed;
+            localPlayer.motionZ = Math.sin(yaw2) * speed;
+        } else {
+            LocationPair p = beacons.peek();
+            Vec3d direction = new Vec3d(p.x-localPlayer.posX, 0, p.z-localPlayer.posZ);
+            if (direction.xCoord*direction.xCoord+direction.zCoord*direction.zCoord <= BEACON_RADIUS_SQUARED) {
+                beacons.poll();
+                msg(String.format("Target reached: [x=%d z=%d]", p.x, p.z));
+                adjustFaceDirectionToTopTarget();
+            }
+            direction = direction.normalize();
+            localPlayer.motionX = direction.xCoord * speed;
+            localPlayer.motionZ = direction.zCoord * speed;
+        }
 
         localPlayer.motionY = 0;
         if (Minecraft.getMinecraft().gameSettings.keyBindJump.isKeyDown()) localPlayer.motionY += 0.5;
