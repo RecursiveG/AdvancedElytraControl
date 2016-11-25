@@ -237,7 +237,15 @@ public class AdvElytraCtl {
             Gui.drawRect(centerX - 7, centerY, centerX + 7, centerY + 1, 0xFFFF0000);
             Gui.drawRect(centerX, centerY -7, centerX + 1, centerY + 7, 0xFFFF0000);
             GuiIngame guiGame = FMLClientHandler.instance().getClient().ingameGUI;
-            guiGame.drawCenteredString(guiGame.getFontRenderer(),String.format("%.2f", speed),centerX, centerY + 9, 0xFFFF0000);
+            if (!beacons.isEmpty() && localPlayer != null) {
+                LocationPair p = beacons.peek();
+                double dx = p.x-localPlayer.posX;
+                double dz = p.z-localPlayer.posZ;
+                int fh = guiGame.getFontRenderer().FONT_HEIGHT;
+                guiGame.drawCenteredString(guiGame.getFontRenderer(),String.format("Target[%d:%d]", p.z,p.z),centerX, centerY + 9 + fh, 0xFFFF0000);
+                guiGame.drawCenteredString(guiGame.getFontRenderer(),String.format("Dist: %.1f", Math.sqrt(dx*dx+dz*dz)),centerX, centerY + 9 + 2 * fh, 0xFFFF0000);
+            }
+            guiGame.drawCenteredString(guiGame.getFontRenderer(),String.format("Speed: %.2f", speed),centerX, centerY + 9, 0xFFFF0000);
 //            boolean speedUp = Minecraft.getMinecraft().gameSettings.keyBindForward.isKeyDown();
         }
     }
