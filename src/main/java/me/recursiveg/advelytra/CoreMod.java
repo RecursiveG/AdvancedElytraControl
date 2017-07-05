@@ -1,19 +1,17 @@
 package me.recursiveg.advelytra;
 
-import net.minecraft.launchwrapper.IClassNameTransformer;
 import net.minecraft.launchwrapper.IClassTransformer;
-import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.fml.common.asm.transformers.deobf.FMLDeobfuscatingRemapper;
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
-import scala.tools.cmd.gen.AnyValReps;
 
 import java.util.Map;
 
-public class CoreMod implements IFMLLoadingPlugin{
+@IFMLLoadingPlugin.MCVersion("1.12")
+public class CoreMod implements IFMLLoadingPlugin {
     @Override
     public String[] getASMTransformerClass() {
         return new String[]{ASM.class.getName()};
@@ -39,8 +37,9 @@ public class CoreMod implements IFMLLoadingPlugin{
         return null;
     }
 
-    /* EntityLivingBase::moveEntityWithHeading#L1867(this.moveEntity()) */
-    /** @see net.minecraft.entity.EntityLivingBase#moveEntityWithHeading(float, float)  */
+    /**
+     * @see net.minecraft.entity.EntityLivingBase#travel(float, float, float)#L2076
+     */
     public static final class ASM implements IClassTransformer {
         @Override
         public byte[] transform(String name, String transformedName, byte[] basicClass) {
@@ -59,13 +58,13 @@ public class CoreMod implements IFMLLoadingPlugin{
                     String methodName = FMLDeobfuscatingRemapper.INSTANCE.mapMethodName(name, mn.name, mn.desc);
                     String methodDesc = FMLDeobfuscatingRemapper.INSTANCE.mapMethodDesc(mn.desc);
 
-                    if ("func_70612_e(FF)V".equals(methodName + methodDesc) || "moveEntityWithHeading(FF)V".equals(methodName + methodDesc)) {
+                    if ("func_191986_a(FFF)V".equals(methodName + methodDesc) || "travel(FFF)V".equals(methodName + methodDesc)) {
                         AbstractInsnNode n = mn.instructions.getFirst();
                         while (n != null) {
                             if (n instanceof MethodInsnNode) {
                                 MethodInsnNode tmp = (MethodInsnNode) n;
                                 if (tmp.getOpcode() == Opcodes.INVOKEVIRTUAL && tmp.desc.endsWith(";DDD)V")) {
-                                    //this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
+                                    /* this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ); */
                                     break;
                                 }
                             }
@@ -74,19 +73,19 @@ public class CoreMod implements IFMLLoadingPlugin{
                         n = n.getPrevious().getPrevious().getPrevious().getPrevious().getPrevious().getPrevious().getPrevious().getPrevious();
                         mn.instructions.insertBefore(n, new VarInsnNode(Opcodes.ALOAD, 0));
                         mn.instructions.insertBefore(n, new MethodInsnNode(Opcodes.INVOKESTATIC, "me/recursiveg/advelytra/AdvElytraCtl",
-                                "beforeMotion","(Lnet/minecraft/entity/EntityLivingBase;)V", false));
+                                "beforeMotion", "(Lnet/minecraft/entity/EntityLivingBase;)V", false));
 
                         while (n != null) {
                             if (n instanceof LdcInsnNode) {
                                 LdcInsnNode tmp = (LdcInsnNode) n;
-                                if (tmp.cst instanceof Float && Math.abs((float)tmp.cst-0.91f) < 1E-5f)
+                                if (tmp.cst instanceof Float && Math.abs((float) tmp.cst - 0.91f) < 1E-5f)
                                     break;
                             }
                             n = n.getNext();
                         }
                         mn.instructions.insertBefore(n, new VarInsnNode(Opcodes.ALOAD, 0));
                         mn.instructions.insertBefore(n, new MethodInsnNode(Opcodes.INVOKESTATIC, "me/recursiveg/advelytra/AdvElytraCtl",
-                                "beforeNotFlyMotion","(Lnet/minecraft/entity/EntityLivingBase;)V", false));
+                                "beforeNotFlyMotion", "(Lnet/minecraft/entity/EntityLivingBase;)V", false));
 
                         System.out.println("[AEC] Transform success");
                     }
