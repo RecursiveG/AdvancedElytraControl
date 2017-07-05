@@ -1,0 +1,10 @@
+[
+{
+  "modid": "advelytractl",
+  "name": "Advanced Elytra Control",
+  "description": "The missing pilot's joystick for Minecraft",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "authorList": ["RecursiveG"]
+}
+]

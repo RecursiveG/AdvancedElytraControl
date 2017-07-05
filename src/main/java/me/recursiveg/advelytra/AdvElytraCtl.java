@@ -38,7 +38,6 @@ public class AdvElytraCtl {
     private static final double MIN_SPEED = 0;
     private static final double BOOST_SPEED = 7;
     private static final double LAUNCH_SPEED = BOOST_SPEED / 3;
-    //private static final double BEACON_RADIUS_SQUARED = 4;
 
     public static class LocationPair {
         public LocationPair(int x, int z) {
@@ -53,7 +52,6 @@ public class AdvElytraCtl {
     @Mod.Instance
     public static AdvElytraCtl instance;
 
-    //public final Queue<LocationPair> beacons = new ArrayDeque<>();
     public Float lockedYaw = null;
     private EntityPlayerSP localPlayer = null;
     private boolean enabled = false;
@@ -127,7 +125,11 @@ public class AdvElytraCtl {
                     }
                 }
             } else {
-                msg("You can do this only with elytra on");
+                Vec3d look = p.getLookVec();
+                look = look.normalize().scale(LAUNCH_SPEED);
+                p.motionX += look.x;
+                p.motionY += look.y;
+                p.motionZ += look.z;
             }
         }
     }
